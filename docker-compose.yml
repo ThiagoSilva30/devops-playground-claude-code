@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: devops-playground-dev
+    ports:
+      - "8080:8080"
+    environment:
+      ENVIRONMENT: dev
+      HOST: 0.0.0.0
+      PORT: 8080
+    volumes:
+      - ./app:/app
+    command: python3 main.py
+
+  staging:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: devops-playground-staging
+    ports:
+      - "8081:8080"
+    environment:
+      ENVIRONMENT: staging
+      HOST: 0.0.0.0
+      PORT: 8080
+    profiles:
+      - staging
+
+  prod:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: devops-playground-prod
+    ports:
+      - "8082:8080"
+    environment:
+      ENVIRONMENT: prod
+      HOST: 0.0.0.0
+      PORT: 8080
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    profiles:
+      - prod

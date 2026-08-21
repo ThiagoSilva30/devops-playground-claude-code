@@ -35,13 +35,25 @@ data "aws_availability_zones" "available" {
   state = "available"
 }
 
+locals {
+  # EKS suporta apenas essas AZs em us-east-1
+  eks_supported_azs = [
+    "us-east-1a",
+    "us-east-1b",
+    "us-east-1c",
+    "us-east-1d",
+    "us-east-1f"
+  ]
+  # Usar apenas as AZs que EKS suporta
+  azs_for_eks = [for az in data.aws_availability_zones.available.names : az if contains(local.eks_supported_azs, az)]
+}
 # VPC Module
 module "vpc" {
   source = "../../modules/vpc"
 
   name                  = "${local.project_name}-vpc"
   cidr_block            = var.vpc_cidr_block
-  availability_zones    = data.aws_availability_zones.available.names
+  availability_zones    = slice(local.azs_for_eks, 0, 2)
   public_subnet_cidrs   = var.public_subnet_cidrs
   private_subnet_cidrs  = var.private_subnet_cidrs
 }
